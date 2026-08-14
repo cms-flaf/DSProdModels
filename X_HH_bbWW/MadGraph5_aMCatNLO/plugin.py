@@ -1,9 +1,14 @@
-"""X -> HH -> bb WW (resonant, radion/graviton), MadGraph5_aMCatNLO.
+"""X -> HH -> bb WW (resonant, narrow radion), MadGraph5_aMCatNLO.
 
 Co-located per generator: this plugin is shared across center-of-mass energies. The
-energy-specific inputs (genproductions cards, gen fragment) live in the `<comEnergy>/`
+energy-specific inputs (genproductions cards, gen fragments) live in the `<comEnergy>/`
 subdirectory next to this file; `com_energy(era)` selects which one. See the process README
 (`../README.md`) for the physics and the links to the original sources.
+
+Each point declares a decay `channel` — `SL` (single lepton, 2B2JLNu) or `DL` (double lepton,
+2B2L2Nu) — which selects the gen fragment `<comEnergy>/fragments/<channel>.py`. The gridpack is
+channel-independent (the Higgses leave MadGraph undecayed), so SL and DL of the same mass share
+one gridpack.
 """
 
 import os
@@ -18,6 +23,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 class XHHbbWW(ProcessCustomization):
     name = "X_HH_bbWW"
     generator = "MadGraph5_aMCatNLO"
+
+    #: decay channels -> the central sample-name token for that final state
+    CHANNELS = {"SL": "2B2JLNu", "DL": "2B2L2Nu"}
 
     def com_energy(self, era=None):
         """Center-of-mass-energy subfolder for `era`. All current eras are Run3 (13.6 TeV);
@@ -53,10 +61,23 @@ class XHHbbWW(ProcessCustomization):
             cards_template=self._cards_dir(era),
         )
 
+    def channel(self, point):
+        """Decay channel of a point: `SL` (2B2JLNu) or `DL` (2B2L2Nu)."""
+        ch = str(point.params.get("channel", "")).upper()
+        if ch not in self.CHANNELS:
+            raise ValueError(
+                f"point {point.name!r}: `channel` must be one of "
+                f"{sorted(self.CHANNELS)}, got {point.params.get('channel')!r}"
+            )
+        return ch
+
     def gen_fragment(self, point, era=None):
-        return os.path.join(self._cme_dir(era), "fragment.py")
+        return os.path.join(
+            self._cme_dir(era), "fragments", f"{self.channel(point)}.py"
+        )
 
     def gridpack_name(self, point):
+        # channel-independent: the Higgses leave MadGraph undecayed, so SL and DL share a gridpack
         return f"Radion_hh_narrow_M{point.params['mass']}"
 
     def gridpack_rel_path(self, point, era=None):

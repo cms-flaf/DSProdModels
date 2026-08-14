@@ -32,4 +32,5 @@ points:
   - name: GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800
     mass: 800
     spin: 0
+    channel: SL
     events_total: 100000
