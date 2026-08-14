@@ -1,8 +1,8 @@
 # DSProdModels
 
 Model definitions for [DSProd](https://github.com/cms-flaf/DSProd): production cards,
-model-dependent plugins, gen fragments, and any supporting tooling. It is mounted as the
-`dsprod_models` submodule of DSProd and imported as the Python package `dsprod_models`.
+model-dependent plugins, gen fragments, and any supporting tooling. It is mounted at
+`models/` in DSProd and imported as the Python package `models`.
 
 ## Directory organization
 
@@ -46,7 +46,7 @@ and `models/` appear only when a model actually needs them.
 
 ## Discovery
 
-`import dsprod_models` **walks this tree and loads every `plugin.py`** it finds, so a model becomes
+`import models` **walks this tree and loads every `plugin.py`** it finds, so a model becomes
 available to DSProd simply by adding its directory — there is no central registration list to edit.
 Each `plugin.py` must register a `ProcessCustomization` subclass with a **unique `name`** via
 `@register_process`, and should resolve its cards/fragment relative to its own location (via
@@ -65,4 +65,4 @@ package is only usable inside a DSProd checkout, not as a standalone library.
    genproductions recipe, gridpack, custom model, ...).
 4. Add optional `filters/`, `scripts/`, `models/` where the process needs them.
 5. Reference it from a DSProd [production setup](https://github.com/cms-flaf/DSProd) via
-   `process: <name>` and advance the `dsprod_models` submodule pointer in DSProd.
+   `process: <name>` and advance the `models` submodule pointer in DSProd.

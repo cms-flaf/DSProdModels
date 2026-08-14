@@ -48,11 +48,7 @@ class XHHbbWW(ProcessCustomization):
         return points
 
     def gridpack(self, point, era=None):
-        loc = point.params.get("gridpack")
-        if loc:
-            return GridpackSpec(mode="existing", location=loc)
         return GridpackSpec(
-            mode="generate",
             generator=self.generator,
             cards_template=self._cards_dir(era),
         )
@@ -62,6 +58,16 @@ class XHHbbWW(ProcessCustomization):
 
     def gridpack_name(self, point):
         return f"Radion_hh_narrow_M{point.params['mass']}"
+
+    def gridpack_rel_path(self, point, era=None):
+        # mirror the DSProdModels layout in the DSProdGridpacks store
+        return os.path.join(
+            self.name,
+            self.generator,
+            self.com_energy(era),
+            self.gridpack_name(point),
+            "gridpack.tar.xz",
+        )
 
     def render_gridpack_cards(self, point, out_dir):
         cards = self._cards_dir()
