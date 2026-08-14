@@ -1,10 +1,9 @@
-"""X -> HH -> bb WW (resonant, radion/graviton) process customization.
+"""X -> HH -> bb WW (resonant, radion/graviton), MadGraph5_aMCatNLO.
 
-Points are a resonance-mass scan. The gridpack is MadGraph (13.6 TeV), era-independent; it may
-be supplied per point (`gridpack:` in the setup, existing mode) or generated (from the cards in
-this package). The gen fragment (Pythia8 CP5 hadronizer) is common to all masses — the resonance
-mass lives in the gridpack. Cards and fragment are resolved relative to this file, so the model
-is self-contained inside the DSProdModels submodule.
+Co-located per generator: this plugin is shared across center-of-mass energies. The
+energy-specific inputs (genproductions cards, gen fragment) live in the `<comEnergy>/`
+subdirectory next to this file; `com_energy(era)` selects which one. See the process README
+(`../README.md`) for the physics and the links to the original sources.
 """
 
 import os
@@ -13,13 +12,23 @@ from dsprod.registry import register_process
 from dsprod.processes.base import GridpackSpec, Point, ProcessCustomization
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_CARDS = os.path.join(_HERE, "cards")
-_FRAGMENT = os.path.join(_HERE, "fragment.py")
 
 
 @register_process
 class XHHbbWW(ProcessCustomization):
     name = "X_HH_bbWW"
+    generator = "MadGraph5_aMCatNLO"
+
+    def com_energy(self, era=None):
+        """Center-of-mass-energy subfolder for `era`. All current eras are Run3 (13.6 TeV);
+        extend this mapping when the model spans several energies."""
+        return "13p6TeV"
+
+    def _cme_dir(self, era=None):
+        return os.path.join(_HERE, self.com_energy(era))
+
+    def _cards_dir(self, era=None):
+        return os.path.join(self._cme_dir(era), "cards")
 
     def enumerate_points(self, process_cfg):
         events_per_job = process_cfg.get("events_per_job", 0)
@@ -44,22 +53,23 @@ class XHHbbWW(ProcessCustomization):
             return GridpackSpec(mode="existing", location=loc)
         return GridpackSpec(
             mode="generate",
-            generator="MadGraph5_aMCatNLO",
-            cards_template=_CARDS,
+            generator=self.generator,
+            cards_template=self._cards_dir(era),
         )
 
     def gen_fragment(self, point, era=None):
-        return _FRAGMENT
+        return os.path.join(self._cme_dir(era), "fragment.py")
 
     def gridpack_name(self, point):
         return f"Radion_hh_narrow_M{point.params['mass']}"
 
     def render_gridpack_cards(self, point, out_dir):
+        cards = self._cards_dir()
         name = self.gridpack_name(point)
         mass = point.params["mass"]
         os.makedirs(out_dir, exist_ok=True)
         for card in ("proc_card", "run_card", "customizecards", "extramodels"):
-            with open(os.path.join(_CARDS, f"{card}.dat")) as f:
+            with open(os.path.join(cards, f"{card}.dat")) as f:
                 text = f.read().replace("__NAME__", name).replace("__MASS__", str(mass))
             with open(os.path.join(out_dir, f"{name}_{card}.dat"), "w") as f:
                 f.write(text)
