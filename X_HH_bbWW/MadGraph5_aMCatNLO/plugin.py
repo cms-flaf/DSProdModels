@@ -27,6 +27,10 @@ class XHHbbWW(ProcessCustomization):
     #: decay channels -> the central sample-name token for that final state
     CHANNELS = {"SL": "2B2JLNu", "DL": "2B2L2Nu"}
 
+    #: process directory in the gridpacks store; the gridpack stops at the undecayed HH state,
+    #: so it is shared with every other X->HH final state and is not stored under `name`
+    gridpack_process = "X_HH"
+
     def com_energy(self, era=None):
         """Center-of-mass-energy subfolder for `era`. All current eras are Run3 (13.6 TeV);
         extend this mapping when the model spans several energies."""
@@ -83,7 +87,7 @@ class XHHbbWW(ProcessCustomization):
     def gridpack_rel_path(self, point, era=None):
         # mirror the DSProdModels layout in the DSProdGridpacks store
         return os.path.join(
-            self.name,
+            self.gridpack_process,
             self.generator,
             self.com_energy(era),
             self.gridpack_name(point),

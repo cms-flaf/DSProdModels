@@ -61,8 +61,12 @@ up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally s
   (DL, `2B2L2Nu`).
 - **Central gridpacks** — the standard mass points exist on cvmfs under
   `/cvmfs/cms.cern.ch/phys_generator/gridpacks/RunIII/13p6TeV/.../GF_HH_Spin0/Radion_hh_narrow_M<mass>_*`
-  and are mirrored into [DSProdGridpacks](https://github.com/cms-flaf/DSProdGridpacks), from where
-  `MakeGridpack` imports them; a mass with no stored gridpack is generated from the cards instead.
+  and are mirrored into [DSProdGridpacks](https://github.com/cms-flaf/DSProdGridpacks) under
+  `X_HH/MadGraph5_aMCatNLO/13p6TeV/` — **`X_HH`, not `X_HH_bbWW`**, because the gridpack stops at
+  the undecayed HH state and is shared with every other X→HH final state (see
+  `gridpack_process` in the plugin). `MakeGridpack` imports from there; a mass with no stored
+  gridpack is generated from the cards instead. Per-gridpack provenance (source file, size,
+  sha256) is documented in each gridpack's own `README.md` there.
 
 ## Notes
 
