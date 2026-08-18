@@ -62,30 +62,42 @@ to keep in sync.
     spin: 0
     final_state: 2B2JLNu
     events_total:
-      Run3_2023: 207000
-      Run3_2023BPix: 112000
-      Run3_2024: 2845000
+      Run3_2023: 210000
+      Run3_2023BPix: 120000
+      Run3_2024: 2850000
 ```
 
 | Era | Covers | Events |
 |---|---|---|
-| Run3_2023 | 2023 | 6.3 M |
-| Run3_2023BPix | 2023BPix | 3.4 M |
-| Run3_2024 | 2024 + 2025 + 2026 | 86.3 M |
+| Run3_2023 | 2023 | 6.54 M |
+| Run3_2023BPix | 2023BPix | 3.66 M |
+| Run3_2024 | 2024 + 2025 + 2026 | 87.06 M |
 
 An era a point does not list simply produces nothing for it. Subsets and short checks are
 command-line options of the DSProd tasks (`--points '<glob>'`, `--test <n-events>`), not separate
 setups.
 
-**Event targets** reproduce the central per-mass statistics scaled by integrated luminosity:
+**Event targets** start from the central per-mass statistics scaled by integrated luminosity,
 
 ```
-N(mass, final_state, era) = [ N_2022 + N_2022EE ] / 34664 pb⁻¹ × L(era) ,  rounded to 1k
+N(mass, final_state, era) = [ N_2022 + N_2022EE ] / 34664 pb⁻¹ × L(era)
 ```
 
 with `L` = 17964 pb⁻¹ (2023), 9677 pb⁻¹ (2023BPix) and 246522 pb⁻¹ (2024+2025+2026, which share the
-Summer24 MC). This preserves the central production's own mass dependence — it used ~11.5 events/pb⁻¹
-up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally smaller.
+Summer24 MC), and are then **unified over the mass points** in two groups per final state and era:
+
+| era | M ≤ 1000 GeV | M > 1000 GeV |
+|---|---|---|
+| Run3_2023 | 210 000 | 60 000 |
+| Run3_2023BPix | 120 000 | 30 000 |
+| Run3_2024 | 2 850 000 | 720 000 |
+
+Each group gets its largest scaled value, rounded up to a multiple of 10 000, so the samples of a
+group are directly comparable and no point falls below its luminosity-scaled target. Both final
+states end up with the same numbers — their group maxima differed by a single rounding step. The
+two groups keep the step the central production itself takes: it used ~11.5 events/pb⁻¹ at low mass
+and ~2.9 events/pb⁻¹ high up, so high masses stay proportionally smaller. Unification costs +1.4 %
+events overall.
 
 ## Original sources
 
