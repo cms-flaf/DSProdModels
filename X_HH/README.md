@@ -105,9 +105,11 @@ up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally s
 - **Central gridpacks** — the standard mass points exist on cvmfs under
   `/cvmfs/cms.cern.ch/phys_generator/gridpacks/RunIII/13p6TeV/.../GF_HH_Spin0/Radion_hh_narrow_M<mass>_*`
   and are mirrored into [DSProdGridpacks](https://github.com/cms-flaf/DSProdGridpacks) under
-  `X_HH/MadGraph5_aMCatNLO/13p6TeV/`, mirroring this layout. `ImportGridpack` copies one from
-  there; a mass with no stored gridpack is generated from the cards instead. Per-gridpack
-  provenance (source file, size, sha256) is documented in each gridpack's own `README.md` there.
+  `X_HH/MadGraph5_aMCatNLO/13p6TeV/GluGlutoRadion/GluGlutoRadiontoHH_M-<mass>/` — **the same levels
+  and the same DAS tokens as here**, with `cards/<production_mode>/` on this side matching
+  `<production_mode>/` on that one. `ImportGridpack` copies one from there; a mass with no stored
+  gridpack is generated from the cards instead. Per-gridpack provenance (source file, size, sha256)
+  is documented in each gridpack's own `README.md` there.
 
 ## Notes
 
@@ -116,8 +118,10 @@ up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally s
   when rendering the cards.
 - **Final states share a gridpack:** the Higgses leave MadGraph undecayed, so `2B2JLNu` and
   `2B2L2Nu` of the same mass use one gridpack — the gridpack tasks branch over distinct gridpacks,
-  not points, and it is imported (or produced) once. The gridpack name comes from the production
-  mode (`PRODUCTION_MODES[...]["gridpack"]`), so gridpacks of different modes never collide.
+  not points, and it is imported (or produced) once. The gridpack **name** comes from the
+  production mode (`PRODUCTION_MODES[...]["gridpack"]` → `GluGlutoRadiontoHH_M-800`), so gluon
+  fusion and VBF gridpacks stay distinct even where they are stored flat, as they are under a
+  production's `<output>/gridpacks/`.
 - **`2B2L2Nu` is not just a filter tweak of `2B2JLNu`:** it additionally enables leptonic `Z` decays
   and `H→ZZ` (`25:onIfMatch = 23 23`), restricts `W`/`Z` to leptonic modes and sets
   `eMuAsEquivalent = off`. Each final state therefore keeps its own McM-sourced fragment rather

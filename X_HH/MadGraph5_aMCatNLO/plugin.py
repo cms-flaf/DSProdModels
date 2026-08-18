@@ -33,11 +33,12 @@ from dsprod.processes.base import (
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
-#: How the hard process is produced. The key is the DAS production-mode token, which is also the
-#: name of the cards directory; `gridpack` is the gridpack naming used by the corresponding central
-#: production (DSProdGridpacks stores them under exactly these names).
+#: How the hard process is produced. The key is the DAS production-mode token, which names both the
+#: cards directory here and the production-mode level of the gridpack store; `gridpack` is the
+#: gridpack naming, which must carry the production mode itself, because a production stores its
+#: gridpacks flat (`<output>/gridpacks/<gridpack-name>/`).
 PRODUCTION_MODES = {
-    "GluGlutoRadion": {"gridpack": "Radion_hh_narrow_M{mass}"},
+    "GluGlutoRadion": {"gridpack": "GluGlutoRadiontoHH_M-{mass}"},
 }
 
 #: production mode of a point that does not name one (and of a setup with no default)
@@ -131,11 +132,13 @@ class XHH(ProcessCustomization):
         return template.format(**point.params)
 
     def gridpack_rel_path(self, point, era=None):
-        # mirror the DSProdModels layout in the DSProdGridpacks store
+        # the DSProdGridpacks store mirrors this model's layout level for level:
+        # <process>/<generator>/<comEnergy>/<production_mode>/<gridpack-name>/
         return os.path.join(
             self.name,
             self.generator,
             self.com_energy(era),
+            self.production_mode(point),
             self.gridpack_name(point),
             "gridpack.tar.xz",
         )
