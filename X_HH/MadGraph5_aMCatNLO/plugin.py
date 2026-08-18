@@ -1,35 +1,35 @@
-"""X -> HH -> bb WW (resonant, narrow radion), MadGraph5_aMCatNLO.
+"""X -> HH (resonant, narrow radion), MadGraph5_aMCatNLO.
+
+The cards produce `gg -> X -> HH` with both Higgs bosons **undecayed**, so this model is not tied
+to a final state: a point picks one by naming a `channel`, which is simply the gen fragment
+`<comEnergy>/fragments/<channel>.py` that decays the HH pair. Adding a final state therefore means
+adding a fragment — nothing here changes. One gridpack serves them all, so the points of one mass
+are produced from a single gridpack.
 
 Co-located per generator: this plugin is shared across center-of-mass energies. The
 energy-specific inputs (genproductions cards, gen fragments) live in the `<comEnergy>/`
 subdirectory next to this file; `com_energy(era)` selects which one. See the process README
 (`../README.md`) for the physics and the links to the original sources.
-
-Each point declares a decay `channel` — `SL` (single lepton, 2B2JLNu) or `DL` (double lepton,
-2B2L2Nu) — which selects the gen fragment `<comEnergy>/fragments/<channel>.py`. The gridpack is
-channel-independent (the Higgses leave MadGraph undecayed), so SL and DL of the same mass share
-one gridpack.
 """
 
+import glob
 import os
 
 from dsprod.registry import register_process
-from dsprod.processes.base import GridpackSpec, Point, ProcessCustomization
+from dsprod.processes.base import (
+    GridpackSpec,
+    Point,
+    ProcessCustomization,
+    events_per_era,
+)
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 @register_process
-class XHHbbWW(ProcessCustomization):
-    name = "X_HH_bbWW"
+class XHH(ProcessCustomization):
+    name = "X_HH"
     generator = "MadGraph5_aMCatNLO"
-
-    #: decay channels -> the central sample-name token for that final state
-    CHANNELS = {"SL": "2B2JLNu", "DL": "2B2L2Nu"}
-
-    #: process directory in the gridpacks store; the gridpack stops at the undecayed HH state,
-    #: so it is shared with every other X->HH final state and is not stored under `name`
-    gridpack_process = "X_HH"
 
     def com_energy(self, era=None):
         """Center-of-mass-energy subfolder for `era`. All current eras are Run3 (13.6 TeV);
@@ -44,6 +44,7 @@ class XHHbbWW(ProcessCustomization):
 
     def enumerate_points(self, process_cfg):
         events_per_job = process_cfg.get("events_per_job", 0)
+        eras = process_cfg["eras"]
         points = []
         for p in process_cfg["points"]:
             points.append(
@@ -53,7 +54,8 @@ class XHHbbWW(ProcessCustomization):
                     params={
                         k: v for k, v in p.items() if k not in ("name", "events_total")
                     },
-                    events_total=p["events_total"],
+                    # per era, so one setup covers every era it produces
+                    events_total=events_per_era(p["events_total"], eras),
                     events_per_job=p.get("events_per_job", events_per_job),
                 )
             )
@@ -65,13 +67,21 @@ class XHHbbWW(ProcessCustomization):
             cards_template=self._cards_dir(era),
         )
 
+    def channels(self, era=None):
+        """Final states available at this energy — one gen fragment each."""
+        pattern = os.path.join(self._cme_dir(era), "fragments", "*.py")
+        return sorted(
+            os.path.splitext(os.path.basename(f))[0] for f in glob.glob(pattern)
+        )
+
     def channel(self, point):
-        """Decay channel of a point: `SL` (2B2JLNu) or `DL` (2B2L2Nu)."""
-        ch = str(point.params.get("channel", "")).upper()
-        if ch not in self.CHANNELS:
+        """Final state of a point: the gen fragment that decays the HH pair."""
+        ch = str(point.params.get("channel", ""))
+        available = self.channels()
+        if ch not in available:
             raise ValueError(
-                f"point {point.name!r}: `channel` must be one of "
-                f"{sorted(self.CHANNELS)}, got {point.params.get('channel')!r}"
+                f"point {point.name!r}: `channel` must be one of {available} "
+                f"(a fragment in <comEnergy>/fragments/), got {point.params.get('channel')!r}"
             )
         return ch
 
@@ -87,7 +97,7 @@ class XHHbbWW(ProcessCustomization):
     def gridpack_rel_path(self, point, era=None):
         # mirror the DSProdModels layout in the DSProdGridpacks store
         return os.path.join(
-            self.gridpack_process,
+            self.name,
             self.generator,
             self.com_energy(era),
             self.gridpack_name(point),

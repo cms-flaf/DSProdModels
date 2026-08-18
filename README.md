@@ -22,8 +22,9 @@ the process/generator tooling — is then naturally shared across energies, and 
 for an existing model is just one more `<comEnergy>/` folder. Example:
 
 ```
-X_HH_bbWW/                              process
+X_HH/                                   process
 ├── README.md                          process documentation + links to the original sources
+├── setups/                            production setups (one file per production, all eras)
 ├── filters/                           (optional) final-state filters, shared across generators/energies
 └── MadGraph5_aMCatNLO/                generator
     ├── plugin.py                      the ProcessCustomization (registered), shared across energies
@@ -31,8 +32,13 @@ X_HH_bbWW/                              process
     ├── models/                        (optional) custom generator models, when not centrally available
     └── 13p6TeV/                       center-of-mass energy (LAST level)
         ├── cards/                     genproductions input cards for this energy
-        └── fragment.py                CMSSW gen fragment for this energy
+        └── fragments/                 CMSSW gen fragments — one per final state
 ```
+
+**Name a process after what its cards actually produce**, not after a final state the fragment
+adds later: `X_HH` produces an undecayed HH pair, and the `SL`/`DL` bbWW final states are two
+fragments inside it. A new final state is then one more fragment, sharing the cards, the plugin and
+the gridpacks.
 
 ### What goes where
 
@@ -44,9 +50,10 @@ X_HH_bbWW/                              process
   co-located with the tooling it needs: `scripts/` to (re)generate prodcards for different
   parameters (e.g. a mass scan) and `models/` for custom generator models not centrally available.
 - **`<comEnergy>/`** — the innermost level (e.g. `13p6TeV`), holding only the energy-specific
-  inputs: the genproductions `cards/` and the gen `fragment.py`.
+  inputs: the genproductions `cards/` and the gen `fragments/`, whose file names are the `channel:`
+  values a setup point can ask for.
 
-Only `plugin.py`, `cards/`, `fragment.py`, and the READMEs are required. `filters/`, `scripts/`,
+Only `plugin.py`, `cards/`, one fragment, and the READMEs are required. `filters/`, `scripts/`,
 and `models/` appear only when a model actually needs them.
 
 ## Discovery
@@ -64,8 +71,8 @@ plugins here only run inside a DSProd checkout, not as a standalone library.
 
 1. Create `<process>/<generator>/` with a `plugin.py` — a `ProcessCustomization` subclass
    decorated with `@register_process` and a unique `name`.
-2. Add a `<process>/<generator>/<comEnergy>/` folder with the `cards/` and `fragment.py` for each
-   energy you produce.
+2. Add a `<process>/<generator>/<comEnergy>/` folder with the `cards/` and the `fragments/` for
+   each energy you produce.
 3. Document the process in `<process>/README.md`, with links to the original sources (McM request,
    genproductions recipe, gridpack, custom model, ...).
 4. Add optional `filters/`, `scripts/`, `models/` where the process needs them.
