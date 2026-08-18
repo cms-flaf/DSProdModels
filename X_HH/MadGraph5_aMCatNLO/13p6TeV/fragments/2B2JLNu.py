@@ -1,11 +1,12 @@
-# X->HH->bbWW gen fragment, SINGLE-lepton channel (2B2JLNu), narrow radion.
+# X->HH->bbWW gen fragment, final state 2B2JLNu (single lepton) — the file name is the DAS
+# final-state token, which is what a setup point asks for with `final_state:`.
 # Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00612.
 #
 # The gridpack produces H H (Higgs undecayed); Pythia decays H->bb / H->WW and the
 # ResonanceDecayFilter selects the final state: daughters = 5,5,1,1,11,12 -> bb + (W->qq) +
-# (W->lnu). The double-lepton fragment (DL.py) is NOT just a different daughters list — it also
-# enables leptonic Z decays and H->ZZ — so each channel keeps its own McM-sourced fragment.
-# The gridpack itself is channel-independent, so SL and DL share it.
+# (W->lnu). The double-lepton fragment (2B2L2Nu.py) is NOT just a different daughters list — it
+# also enables leptonic Z decays and H->ZZ — so each final state keeps its own McM-sourced
+# fragment. The gridpack itself is final-state independent, so both share it.
 #
 # DSProd's run_step overrides externalLHEProducer.args (the actual/staged gridpack), .nEvents,
 # and the random seed at the LHEGS step, so this fragment is reused across mass points.

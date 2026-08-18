@@ -5,36 +5,54 @@ to a pair of Higgs bosons, `gg → X → HH`. Points are a resonance-mass scan; 
 gridpack.
 
 **The cards stop at the undecayed HH pair**, which is why the model is called `X_HH` and not after
-a final state. The decays are done by the CMSSW gen fragment, which a point selects by name:
+a production mode or a final state. A point names both, with the tokens the corresponding central
+dataset uses **on DAS**:
 
 ```yaml
-channel: SL      # -> MadGraph5_aMCatNLO/<comEnergy>/fragments/SL.py
+  - name: GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800   # the DAS dataset name
+    production_mode: GluGlutoRadion                 # -> cards/GluGlutoRadion/
+    final_state: 2B2JLNu                            # -> fragments/2B2JLNu.py
 ```
 
-Adding a final state is therefore just adding a fragment — the plugin, the cards and the gridpacks
-are untouched, and the new final state shares the gridpacks with the existing ones.
+Both are open sets, and neither needs code:
+
+- **another final state** = another fragment in `fragments/`, named after its DAS token. It shares
+  the cards and the gridpacks, since the decays happen after the generator;
+- **another production mode** (VBF, …) = another directory in `cards/` plus one entry in the
+  plugin's `PRODUCTION_MODES` (which also holds the gridpack naming of that mode). The fragments,
+  the tasks and the gridpack store are unaffected.
 
 - **Registered name:** `X_HH` (the `process:` key in a DSProd production setup).
 - **Generator:** `MadGraph5_aMCatNLO` (LO gridpack) + Pythia8 (CP5) hadronization.
-- **Final states shipped:** `SL` — bbWW single lepton (`2B2JLNu`); `DL` — bbWW double lepton
-  (`2B2L2Nu`).
+- **Production modes shipped:** `GluGlutoRadion` — gluon fusion, narrow spin-0 radion.
+- **Final states shipped:** `2B2JLNu` — bbWW single lepton; `2B2L2Nu` — bbWW double lepton.
 
 ## Layout
 
 ```
-setups/                  production setups (one file covers every era)
+setups/                          production setups (one file covers every era)
 MadGraph5_aMCatNLO/
-├── plugin.py            the ProcessCustomization for this process/generator
+├── plugin.py                    the ProcessCustomization for this process/generator
 └── 13p6TeV/
-    ├── cards/           genproductions cards (see cards/README.md for the recipe)
-    └── fragments/       one per final state; the file name IS the `channel:` value
-        ├── SL.py        bbWW single lepton (2B2JLNu)
-        └── DL.py        bbWW double lepton (2B2L2Nu)
+    ├── cards/                   genproductions cards, one directory per production mode
+    │   └── GluGlutoRadion/      gg -> X(radion) -> HH  (see its README.md for the recipe)
+    └── fragments/               one file per final state; the file name IS `final_state:`
+        ├── 2B2JLNu.py           bbWW single lepton
+        └── 2B2L2Nu.py           bbWW double lepton
+```
+
+Both levels use the **DAS tokens** of the corresponding central samples, so a point's `name`,
+`production_mode` and `final_state` read the same way as the dataset it reproduces:
+
+```
+/GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800/...
+ └──────┬──────┘            └──┬───┘
+  production_mode            final_state
 ```
 
 ## Production setup
 
-`setups/Run3_XHHbbWW.yaml` — 44 samples (22 masses × SL/DL) for every era central production
+`setups/Run3_XHHbbWW.yaml` — 44 samples (22 masses × 2 final states) for every era central production
 misses. **One file for all of them**: `events_total` is given per era, so there is no per-era copy
 to keep in sync.
 
@@ -42,7 +60,7 @@ to keep in sync.
   - name: GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800
     mass: 800
     spin: 0
-    channel: SL
+    final_state: 2B2JLNu
     events_total:
       Run3_2023: 207000
       Run3_2023BPix: 112000
@@ -62,7 +80,7 @@ setups.
 **Event targets** reproduce the central per-mass statistics scaled by integrated luminosity:
 
 ```
-N(mass, channel, era) = [ N_2022 + N_2022EE ] / 34664 pb⁻¹ × L(era) ,  rounded to 1k
+N(mass, final_state, era) = [ N_2022 + N_2022EE ] / 34664 pb⁻¹ × L(era) ,  rounded to 1k
 ```
 
 with `L` = 17964 pb⁻¹ (2023), 9677 pb⁻¹ (2023BPix) and 246522 pb⁻¹ (2024+2025+2026, which share the
@@ -78,11 +96,12 @@ up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally s
 - **Custom model** — `heft_radion`, packaged centrally as `dibosonResonanceModel.tar.gz` and
   fetched by `gridpack_generation.sh` from `cms-project-generators` (referenced in
   `extramodels.dat`); nothing is shipped from this repo.
-- **Gen fragments** — taken verbatim from the McM requests of the corresponding central samples:
+- **Gen fragments** — named after their DAS final-state token and taken verbatim from the McM
+  requests of the corresponding central samples:
   [`B2G-Run3Summer22EEwmLHEGS-00612`](https://cms-pdmv.cern.ch/mcm/requests?prepid=B2G-Run3Summer22EEwmLHEGS-00612)
-  (SL, `2B2JLNu`) and
+  (`2B2JLNu`) and
   [`B2G-Run3Summer22EEwmLHEGS-00656`](https://cms-pdmv.cern.ch/mcm/requests?prepid=B2G-Run3Summer22EEwmLHEGS-00656)
-  (DL, `2B2L2Nu`).
+  (`2B2L2Nu`).
 - **Central gridpacks** — the standard mass points exist on cvmfs under
   `/cvmfs/cms.cern.ch/phys_generator/gridpacks/RunIII/13p6TeV/.../GF_HH_Spin0/Radion_hh_narrow_M<mass>_*`
   and are mirrored into [DSProdGridpacks](https://github.com/cms-flaf/DSProdGridpacks) under
@@ -95,10 +114,11 @@ up to ~2 TeV and ~2.9 events/pb⁻¹ above, so high masses stay proportionally s
 - **Mass scan:** only the resonance mass changes between points (`__MASS__` → `mass 35` in
   `customizecards.dat`); the width is fixed narrow. The plugin substitutes `__NAME__`/`__MASS__`
   when rendering the cards.
-- **Final states share a gridpack:** the Higgses leave MadGraph undecayed, so SL and DL of the same
-  mass use one gridpack — the gridpack tasks branch over distinct gridpacks, not points, and it is
-  imported (or produced) once.
-- **SL vs DL is not just a filter tweak:** the DL fragment additionally enables leptonic `Z` decays
+- **Final states share a gridpack:** the Higgses leave MadGraph undecayed, so `2B2JLNu` and
+  `2B2L2Nu` of the same mass use one gridpack — the gridpack tasks branch over distinct gridpacks,
+  not points, and it is imported (or produced) once. The gridpack name comes from the production
+  mode (`PRODUCTION_MODES[...]["gridpack"]`), so gridpacks of different modes never collide.
+- **`2B2L2Nu` is not just a filter tweak of `2B2JLNu`:** it additionally enables leptonic `Z` decays
   and `H→ZZ` (`25:onIfMatch = 23 23`), restricts `W`/`Z` to leptonic modes and sets
-  `eMuAsEquivalent = off`. Each channel therefore keeps its own McM-sourced fragment rather than a
-  generated variant.
+  `eMuAsEquivalent = off`. Each final state therefore keeps its own McM-sourced fragment rather
+  than a generated variant.

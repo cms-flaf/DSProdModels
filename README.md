@@ -35,10 +35,21 @@ X_HH/                                   process
         └── fragments/                 CMSSW gen fragments — one per final state
 ```
 
-**Name a process after what its cards actually produce**, not after a final state the fragment
-adds later: `X_HH` produces an undecayed HH pair, and the `SL`/`DL` bbWW final states are two
-fragments inside it. A new final state is then one more fragment, sharing the cards, the plugin and
-the gridpacks.
+**Name a process after what its cards actually produce**, not after a production mode or a final
+state added later: `X_HH` produces an undecayed HH pair, while gluon fusion vs. VBF is a `cards/`
+directory and the bbWW final states are `fragments/` inside it.
+
+**Use the DAS tokens of the central samples** for those names, so a setup point reads like the
+dataset it reproduces:
+
+```
+/GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800/...     the point `name`
+ └──────┬──────┘            └──┬───┘
+  production_mode            final_state          -> cards/<mode>/ , fragments/<final_state>.py
+```
+
+A new final state is then one more fragment (sharing the cards, the plugin and the gridpacks), and
+a new production mode one more cards directory.
 
 ### What goes where
 
@@ -50,8 +61,9 @@ the gridpacks.
   co-located with the tooling it needs: `scripts/` to (re)generate prodcards for different
   parameters (e.g. a mass scan) and `models/` for custom generator models not centrally available.
 - **`<comEnergy>/`** — the innermost level (e.g. `13p6TeV`), holding only the energy-specific
-  inputs: the genproductions `cards/` and the gen `fragments/`, whose file names are the `channel:`
-  values a setup point can ask for.
+  inputs: the genproductions `cards/` — one directory per production mode — and the gen
+  `fragments/`, whose file names are the `final_state:` values a setup point can ask for. Both use
+  the DAS tokens of the corresponding central samples.
 
 Only `plugin.py`, `cards/`, one fragment, and the READMEs are required. `filters/`, `scripts/`,
 and `models/` appear only when a model actually needs them.

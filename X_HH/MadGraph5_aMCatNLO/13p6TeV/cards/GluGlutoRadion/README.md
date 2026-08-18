@@ -1,4 +1,9 @@
-# X->HH->bbWW gridpack cards (narrow radion)
+# Cards: GluGlutoRadion (gluon fusion, narrow radion)
+
+The directory name is the **production mode**, in the DAS notation a point uses
+(`production_mode: GluGlutoRadion`). Another production mode — VBF, for instance — is a sibling
+directory here plus one entry in the plugin's `PRODUCTION_MODES`; the fragments, the tasks and the
+gridpack store are unaffected, since the cards stop at the undecayed HH pair.
 
 Authoritative genproductions recipe
 (`cms-sw/genproductions/bin/MadGraph5_aMCatNLO/cards/production/13p6TeV/HHresonant/Spin-0`,
