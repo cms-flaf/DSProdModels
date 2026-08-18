@@ -102,7 +102,7 @@ events overall.
 ## Original sources
 
 - **genproductions recipe** — MadGraph cards follow
-  [`cms-sw/genproductions` · `bin/MadGraph5_aMCatNLO/cards/production/13p6TeV/HHresonant/Spin-0`](https://github.com/cms-sw/genproductions/tree/master/bin/MadGraph5_aMCatNLO/cards/production/13p6TeV/HHresonant),
+  [`cms-sw/genproductions` · `bin/MadGraph5_aMCatNLO/cards/production/13p6TeV/HHresonant/Spin-0`](https://github.com/cms-sw/genproductions/tree/master/bin/MadGraph5_aMCatNLO/cards/production/13p6TeV/HHresonant/Spin-0),
   template `Radion_hh_narrow_M900`. Details and the per-card breakdown are in
   [`MadGraph5_aMCatNLO/13p6TeV/cards/README.md`](MadGraph5_aMCatNLO/13p6TeV/cards/README.md).
 - **Custom model** — `heft_radion`, packaged centrally as `dibosonResonanceModel.tar.gz` and
