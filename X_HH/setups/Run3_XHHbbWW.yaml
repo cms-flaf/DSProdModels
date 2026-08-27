@@ -51,8 +51,13 @@ nano_versions:
 first_step: LHEGS
 last_step: NANO
 
-events_per_job: 2000
-files_per_merge: 25
+# One production job makes `events_per_job` events; `files_per_merge` of those are then merged
+# into one FLAF-facing file. The merge size targets ~1 GB, the convention the HLepRare skims use
+# (their files are 1.072 GB / 346 210 events = 3.10 kB per event). This signal's central NanoAOD
+# sits at 1.7-2.9 kB per event (DAS, Run3Summer22EE NanoAODv12: M-250 0.55 GB / 310 599 ev,
+# M-1000 0.90 GB / 309 333 ev), so 350 x 1000 events lands at roughly 0.9-1.0 GB.
+events_per_job: 1000
+files_per_merge: 350
 
 # default production mode for every point below (a point may override it)
 production_mode: GluGlutoRadion
