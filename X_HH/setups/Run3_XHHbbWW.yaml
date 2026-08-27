@@ -1,11 +1,14 @@
 # X->HH->bbWW resonant signal (narrow radion, spin 0): SL + DL, 22 mass points each.
 #
 # ONE setup for every era it produces: `events_total` is given per era, so no per-era copy of this
-# file is needed. Central production covers only Run3_2022 / Run3_2022EE; the counts below fill the
-# gap, starting from the central per-mass statistics scaled by integrated luminosity,
-#   N(era) = (N_2022 + N_2022EE) / 34664 pb-1 * L(era),
-# with L = 17964 pb-1 (2023), 9677 pb-1 (2023BPix) and 246522 pb-1 (2024, which covers the shared
-# Summer24 MC of 2024 + 2025 + 2026).
+# file is needed. The counts start from the central per-mass statistics for 2022 + 2022EE, scaled
+# by integrated luminosity,
+#   N(era) = (N_2022 + N_2022EE) / 34664.43 pb-1 * L(era),
+# with L taken from FLAF's `config/<era>/global.yaml`: 7989.51 pb-1 (2022), 26674.92 (2022EE),
+# 17964.22 (2023), 9676.74 (2023BPix) and 246522 (2024, which covers the shared Summer24 MC of
+# 2024 + 2025 + 2026). The reference is 400 k (M <= 1000 GeV) and 100 k (M > 1000 GeV), the sum of
+# what central produced for the two 2022 eras (verified on DAS, e.g. M-250: 87 999 in Run3Summer22
+# and 310 599 in Run3Summer22EE; M-1200: 22 000 and 78 000).
 #
 # The result is then UNIFIED over the mass points, in two groups (M <= 1000 GeV and M > 1000 GeV,
 # the step the central statistics themselves take): every point of a group gets that group's
@@ -13,12 +16,18 @@
 # comparable and no point ends up below its luminosity-scaled target:
 #
 #              era            M <= 1000 GeV   M > 1000 GeV
+#              Run3_2022           100 000         30 000     <- central already covers this
+#              Run3_2022EE         310 000         80 000     <- central already covers this
 #              Run3_2023           210 000         60 000
 #              Run3_2023BPix       120 000         30 000
 #              Run3_2024         2 850 000        720 000
 #
+# The 2022 eras are listed for completeness of the scaling, not to be produced: central production
+# already delivers essentially these numbers there (the shortfall against the rounded-up target is
+# 12 k / 8 k for 2022 and 0 / 2 k for 2022EE). Restrict a run with `--eras` as usual.
+#
 # Both final states get the same numbers: their group maxima differed by a single rounding step.
-# Totals: 6.54 M (2023) + 3.66 M (2023BPix) + 87.06 M (2024) = 97.26 M events.
+# Totals: 3.14 M (2022) + 9.50 M (2022EE) + 6.54 M (2023) + 3.66 M (2023BPix) + 87.06 M (2024).
 #
 # Backend-agnostic: run with --workflow local|htcondor|crab. Produce a subset with
 # `--points '<glob>'` and a short check with `--test <n-events>`; neither needs another setup.
@@ -29,10 +38,12 @@ conditions: config/conditions_Run3.yaml
 # <fs_default>/<output>/nanoAOD_<version>/<era>/<point>/nano_<version>_<n>.root
 output: XHHbbWW
 
-eras: [ Run3_2023, Run3_2023BPix, Run3_2024 ]
+eras: [ Run3_2022, Run3_2022EE, Run3_2023, Run3_2023BPix, Run3_2024 ]
 
 # NanoAOD versions to produce per era (v15-only for 2024)
 nano_versions:
+  Run3_2022: [ v12, v15 ]
+  Run3_2022EE: [ v12, v15 ]
   Run3_2023: [ v12, v15 ]
   Run3_2023BPix: [ v12, v15 ]
   Run3_2024: [ v15 ]
@@ -57,6 +68,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -65,6 +78,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -73,6 +88,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -81,6 +98,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -89,6 +108,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -97,6 +118,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -105,6 +128,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -113,6 +138,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -121,6 +148,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -129,6 +158,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -137,6 +168,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -145,6 +178,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -153,6 +188,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -161,6 +198,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -169,6 +208,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -177,6 +218,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -185,6 +228,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -193,6 +238,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -201,6 +248,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -209,6 +258,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -217,6 +268,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -225,6 +278,8 @@ points:
     spin: 0
     final_state: 2B2JLNu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -235,6 +290,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -243,6 +300,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -251,6 +310,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -259,6 +320,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -267,6 +330,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -275,6 +340,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -283,6 +350,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -291,6 +360,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -299,6 +370,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -307,6 +380,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -315,6 +390,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -323,6 +400,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -331,6 +410,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 310000
       Run3_2023: 210000
       Run3_2023BPix: 120000
       Run3_2024: 2850000
@@ -339,6 +420,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -347,6 +430,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -355,6 +440,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -363,6 +450,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -371,6 +460,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -379,6 +470,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -387,6 +480,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -395,6 +490,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
@@ -403,6 +500,8 @@ points:
     spin: 0
     final_state: 2B2L2Nu
     events_total:
+      Run3_2022: 30000
+      Run3_2022EE: 80000
       Run3_2023: 60000
       Run3_2023BPix: 30000
       Run3_2024: 720000
