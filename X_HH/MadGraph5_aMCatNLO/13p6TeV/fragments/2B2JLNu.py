@@ -55,7 +55,7 @@ generator = cms.EDFilter(
             # below is 0.1005 GeV for the W (-> e nu) and 0.1 GeV for the Z (-> nu nu). The McM
             # value of 0.05 sits under that floor, so Pythia samples a W/Z it then cannot decay
             # and drops the event; an LHE record can only be read once, so the job comes out one
-            # event short of the 1000 it asked for -- about one job in a hundred. 0.5 clears the
+            # event short of the 1000 it asked for -- about one job in two hundred. 0.5 clears the
             # floor with room to spare and gives up only m < 0.5 GeV, where the decay products
             # are unobservably soft. Narrowing the channel lists raises the floor (tau nu alone
             # would put it at 1.88 GeV), so revisit this line together with them.
