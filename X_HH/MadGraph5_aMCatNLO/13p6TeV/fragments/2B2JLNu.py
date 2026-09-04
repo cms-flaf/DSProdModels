@@ -50,12 +50,15 @@ generator = cms.EDFilter(
         pythia8CP5SettingsBlock,
         pythia8PSweightsSettingsBlock,
         processParameters=cms.vstring(
-            # Pythia has no open decay channel for a resonance below its hard-coded
-            # ResonanceWidths::MASSMIN / MASSMARGIN of 0.1 GeV, so the McM value of 0.05 lets it
-            # sample a W/Z it then cannot decay: it drops the event, reads on, and the job ends
-            # one event short of the 1000 it was asked for (~1 job in 100, deterministic in the
-            # seed). 0.5 keeps headroom over that floor and gives up only m < 0.5 GeV, where the
-            # decay products are unobservably soft.
+            # Pythia will not decay a resonance lighter than the mass sum of its lightest open
+            # channel plus 0.1 GeV (ResonanceWidths::MASSMARGIN), which for the channels opened
+            # below is 0.1005 GeV for the W (-> e nu) and 0.1 GeV for the Z (-> nu nu). The McM
+            # value of 0.05 sits under that floor, so Pythia samples a W/Z it then cannot decay
+            # and drops the event; an LHE record can only be read once, so the job comes out one
+            # event short of the 1000 it asked for -- about one job in a hundred. 0.5 clears the
+            # floor with room to spare and gives up only m < 0.5 GeV, where the decay products
+            # are unobservably soft. Narrowing the channel lists raises the floor (tau nu alone
+            # would put it at 1.88 GeV), so revisit this line together with them.
             "24:mMin = 0.5",
             "24:onMode = on",
             "25:m0 = 125.0",
