@@ -1,7 +1,7 @@
 # X->HH->bbWW gen fragment, final state 2B2L2Nu (double lepton) — the file name is the DAS
 # final-state token, which is what a setup point asks for with `final_state:`.
 # Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00656, reproduced
-# verbatim except for the `mMin` of the off-shell W/Z, raised from the McM 0.05 to 0.5 —
+# verbatim except for the `mMin` of the off-shell W/Z, raised from the McM 0.05 to 0.15 —
 # see the comment on that line: at 0.05 Pythia loses an event it cannot decay, and the
 # job then comes out one event short.
 #
@@ -55,14 +55,15 @@ generator = cms.EDFilter(
             # below is 0.1005 GeV for the W (-> e nu) and 0.1 GeV for the Z (-> nu nu). The McM
             # value of 0.05 sits under that floor, so Pythia samples a W/Z it then cannot decay
             # and drops the event; an LHE record can only be read once, so the job comes out one
-            # event short of the 1000 it asked for -- about one job in two hundred. 0.5 clears the
-            # floor with room to spare and gives up only m < 0.5 GeV, where the decay products
-            # are unobservably soft. Narrowing the channel lists raises the floor (tau nu alone
-            # would put it at 1.88 GeV), so revisit this line together with them.
-            "23:mMin = 0.5",
+            # event short of the 1000 it asked for -- about one job in two hundred. 0.15 clears
+            # the floor by 50 MeV and gives up 5e-6 of the decays, the same order as the loss it
+            # removes, in a region where the decay products are unobservably soft anyway.
+            # Narrowing the channel lists raises the floor (tau nu alone would put it at
+            # 1.88 GeV), so revisit this line together with them.
+            "23:mMin = 0.15",
             "23:onMode = off",
             "23:onIfAny = 11 12 13 14 15 16",  # only leptonic Z decays
-            "24:mMin = 0.5",
+            "24:mMin = 0.15",
             "24:onMode = off",
             "24:onIfAny = 11 13 15",  # only leptonic W decays
             "25:m0 = 125.0",
