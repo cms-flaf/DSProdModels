@@ -1,6 +1,9 @@
 # X->HH->bbWW gen fragment, final state 2B2JLNu (single lepton) — the file name is the DAS
 # final-state token, which is what a setup point asks for with `final_state:`.
-# Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00612.
+# Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00612, reproduced
+# verbatim except for the `mMin` of the off-shell W/Z, raised from the McM 0.05 to 0.5 —
+# see the comment on that line: at 0.05 Pythia loses an event it cannot decay, and the
+# job then comes out one event short.
 #
 # The gridpack produces H H (Higgs undecayed); Pythia decays H->bb / H->WW and the
 # ResonanceDecayFilter selects the final state: daughters = 5,5,1,1,11,12 -> bb + (W->qq) +
@@ -47,7 +50,13 @@ generator = cms.EDFilter(
         pythia8CP5SettingsBlock,
         pythia8PSweightsSettingsBlock,
         processParameters=cms.vstring(
-            "24:mMin = 0.05",
+            # Pythia has no open decay channel for a resonance below its hard-coded
+            # ResonanceWidths::MASSMIN / MASSMARGIN of 0.1 GeV, so the McM value of 0.05 lets it
+            # sample a W/Z it then cannot decay: it drops the event, reads on, and the job ends
+            # one event short of the 1000 it was asked for (~1 job in 100, deterministic in the
+            # seed). 0.5 keeps headroom over that floor and gives up only m < 0.5 GeV, where the
+            # decay products are unobservably soft.
+            "24:mMin = 0.5",
             "24:onMode = on",
             "25:m0 = 125.0",
             "25:onMode = off",
