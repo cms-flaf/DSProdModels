@@ -52,9 +52,10 @@ Both levels use the **DAS tokens** of the corresponding central samples, so a po
 
 ## Production setup
 
-`setups/Run3_XHHbbWW.yaml` — 44 samples (22 masses × 2 final states) for every era central production
-misses. **One file for all of them**: `events_total` is given per era, so there is no per-era copy
-to keep in sync.
+`setups/Run3_XHHbbWW.yaml` — **160 samples**: the full 40-mass central grid × 2 spin hypotheses
+(narrow radion, spin 0; bulk graviton, spin 2) × 2 final states. **One file for all of them**:
+`events_total` is given per era, so there is no per-era copy to keep in sync, and **every point
+lists every era** — what a given run produces is chosen on the command line.
 
 ```yaml
   - name: GluGlutoRadiontoHHto2B2Vto2B2JLNu_M-800
@@ -67,15 +68,25 @@ to keep in sync.
       Run3_2024: 2850000
 ```
 
-| Era | Covers | Events |
-|---|---|---|
-| Run3_2023 | 2023 | 6.54 M |
-| Run3_2023BPix | 2023BPix | 3.66 M |
-| Run3_2024 | 2024 + 2025 + 2026 | 87.06 M |
+| Era | Covers | NanoAOD | Events as submitted | Storage |
+|---|---|---|---|---|
+| Run3_2022 | 2022 | v12 | 5.00 M | 26 GB |
+| Run3_2022EE | 2022EE | v12 | 14.20 M | 75 GB |
+| Run3_2023 | 2023 | v12 | 28.00 M | 148 GB |
+| Run3_2023BPix | 2023BPix | v12 | 16.00 M | 85 GB |
+| Run3_2024 | 2024 + 2025 + 2026 | v15 | 288.00 M | 1942 GB |
+| | | | **351.20 M** | **2.28 TB** |
+
+Storage is at the **measured** NanoAOD size — 5.29 kB/event in v12 and 6.74 in v15, taken from 50
+staged nanos merged into one delivered 50 000-event file. (Central NanoAOD on DAS shows
+2.9 kB/event, which under-counts these by ~1.8×.) Each version is a full second copy of an era's
+events, so the 2022/2023 eras produce **v12 only** — the version central delivers for them —
+while 2024 is v15, as its campaign is.
 
 An era a point does not list simply produces nothing for it. Subsets and short checks are
-command-line options of the DSProd tasks (`--points '<glob>'`, `--test <n-events>`), not separate
-setups.
+command-line options of the DSProd tasks (`--points '<glob>'`, `--eras`, `--nano-versions`,
+`--test <n-events>`), not separate setups — which is why the 2022 restriction below lives in the
+command and not in this file.
 
 **Event targets** start from the central per-mass statistics scaled by integrated luminosity,
 
@@ -83,21 +94,72 @@ setups.
 N(mass, final_state, era) = [ N_2022 + N_2022EE ] / 34664 pb⁻¹ × L(era)
 ```
 
-with `L` = 17964 pb⁻¹ (2023), 9677 pb⁻¹ (2023BPix) and 246522 pb⁻¹ (2024+2025+2026, which share the
-Summer24 MC), and are then **unified over the mass points** in two groups per final state and era:
+with `L` = 7990 pb⁻¹ (2022), 26675 pb⁻¹ (2022EE), 17964 pb⁻¹ (2023), 9677 pb⁻¹ (2023BPix) and
+246522 pb⁻¹ (2024+2025+2026, which share the Summer24 MC), and are then **unified over the mass
+points** in two groups per final state and era:
 
 | era | M ≤ 1000 GeV | M > 1000 GeV |
 |---|---|---|
-| Run3_2023 | 210 000 | 60 000 |
-| Run3_2023BPix | 120 000 | 30 000 |
-| Run3_2024 | 2 850 000 | 720 000 |
+| Run3_2022 | 100 000 | 50 000 |
+| Run3_2022EE | 350 000 | 100 000 |
+| Run3_2023 | 250 000 | 100 000 |
+| Run3_2023BPix | 150 000 | 50 000 |
+| Run3_2024 | 2 850 000 | 750 000 |
 
-Each group gets its largest scaled value, rounded up to a multiple of 10 000, so the samples of a
-group are directly comparable and no point falls below its luminosity-scaled target. Both final
+Each group gets its largest scaled value, rounded up to a whole number of merged files (50 000
+events), so the samples of a group are directly comparable, no point falls below its
+luminosity-scaled target, and every merged file is full. Both final
 states end up with the same numbers — their group maxima differed by a single rounding step. The
 two groups keep the step the central production itself takes: it used ~11.5 events/pb⁻¹ at low mass
 and ~2.9 events/pb⁻¹ high up, so high masses stay proportionally smaller. Unification costs +1.4 %
 events overall.
+
+## Submitting a production
+
+Run the **final** task and LAW schedules everything upstream (`InstallCMSSW` → `ImportGridpack` →
+`RunProd` → `NanoMergeTask`). One command per era, from the DSProd checkout after `source env.sh`:
+
+```bash
+SETUP=models/X_HH/setups/Run3_XHHbbWW.yaml
+```
+
+### Run3_2023, Run3_2023BPix, Run3_2024 — the whole grid
+
+Central production has **nothing** for these eras (verified on DAS: zero `Run3Summer23*`,
+`Run3Summer23BPix*` and — for this signal — no 2024 X→HH samples), so all 160 points are produced.
+
+```bash
+law run NanoMergeTask --setup $SETUP --eras Run3_2023      --workflow crab
+law run NanoMergeTask --setup $SETUP --eras Run3_2023BPix  --workflow crab
+law run NanoMergeTask --setup $SETUP --eras Run3_2024      --workflow crab
+```
+
+### Run3_2022 and Run3_2022EE — only the masses central lacks
+
+Central already delivers 22 of the 40 masses in both 2022 eras — verified on DAS
+(`Run3Summer22*NanoAODv12`, 176 datasets: the same 22 masses for **both** spins and **both** final
+states). Producing those again would duplicate a central sample, so a 2022 run is restricted to
+the **18-mass gap** — 320, 360, 400, 500, 750, 850, 900, 1100, 1300, 1500, 1700, 1900, 2200, 2400,
+2600, 2800, 3500 and 4500 GeV:
+
+```bash
+GAP='*_M-320,*_M-360,*_M-400,*_M-500,*_M-750,*_M-850,*_M-900,*_M-1100,*_M-1300,*_M-1500,*_M-1700,*_M-1900,*_M-2200,*_M-2400,*_M-2600,*_M-2800,*_M-3500,*_M-4500'
+
+law run NanoMergeTask --setup $SETUP --eras Run3_2022   --points "$GAP" --workflow crab
+law run NanoMergeTask --setup $SETUP --eras Run3_2022EE --points "$GAP" --workflow crab
+```
+
+That selects **72 of the 160 points** (18 masses × 2 spins × 2 final states). The globs are
+anchored on the mass at the end of the name, so `*_M-500` does not also match `M-5000`.
+
+!!! tip "Check before submitting"
+    `--print-status -1` on any of these shows what LAW considers done versus pending without
+    running anything, and `--test 100` produces a hundred events per point into `<output>_test`,
+    where it cannot touch a production sample.
+
+Swap `--workflow crab` for `htcondor` or `local` — the setup is backend-agnostic. To produce a
+single NanoAOD version where the setup lists two, add `--nano-versions v12`; it narrows the
+setup's per-era list and never widens it.
 
 ## Original sources
 

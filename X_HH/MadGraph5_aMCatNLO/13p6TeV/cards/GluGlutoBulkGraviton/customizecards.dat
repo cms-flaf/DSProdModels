@@ -1,0 +1,5 @@
+# Per-point customization for the narrow bulk-graviton HH mass scan (authoritative genproductions
+# form). Only the resonance mass changes; the width is fixed narrow (1 MeV). The spin-2 resonance
+# is PDG 39 (`y` in RS_bulk_ktilda), where the radion is PDG 35. __MASS__ is substituted by DSProd.
+set param_card mass 39 __MASS__
+set param_card decay 39 1.000000e-03

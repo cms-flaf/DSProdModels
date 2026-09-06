@@ -39,6 +39,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 #: gridpacks flat (`<output>/gridpacks/<gridpack-name>/`).
 PRODUCTION_MODES = {
     "GluGlutoRadion": {"gridpack": "GluGlutoRadiontoHH_M-{mass}"},
+    "GluGlutoBulkGraviton": {"gridpack": "GluGlutoBulkGravitontoHH_M-{mass}"},
 }
 
 #: production mode of a point that does not name one (and of a setup with no default)
