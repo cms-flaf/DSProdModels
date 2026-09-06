@@ -1,6 +1,9 @@
 # X->HH->bbWW gen fragment, final state 2B2JLNu (single lepton) — the file name is the DAS
 # final-state token, which is what a setup point asks for with `final_state:`.
-# Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00612.
+# Authoritative source: McM requests/get_fragment/B2G-Run3Summer22EEwmLHEGS-00612, reproduced
+# verbatim except for the `mMin` of the off-shell W/Z, raised from the McM 0.05 to 0.15 —
+# see the comment on that line: at 0.05 Pythia loses an event it cannot decay, and the
+# job then comes out one event short.
 #
 # The gridpack produces H H (Higgs undecayed); Pythia decays H->bb / H->WW and the
 # ResonanceDecayFilter selects the final state: daughters = 5,5,1,1,11,12 -> bb + (W->qq) +
@@ -47,7 +50,17 @@ generator = cms.EDFilter(
         pythia8CP5SettingsBlock,
         pythia8PSweightsSettingsBlock,
         processParameters=cms.vstring(
-            "24:mMin = 0.05",
+            # Pythia will not decay a resonance lighter than the mass sum of its lightest open
+            # channel plus 0.1 GeV (ResonanceWidths::MASSMARGIN), which for the channels opened
+            # below is 0.1005 GeV for the W (-> e nu) and 0.1 GeV for the Z (-> nu nu). The McM
+            # value of 0.05 sits under that floor, so Pythia samples a W/Z it then cannot decay
+            # and drops the event; an LHE record can only be read once, so the job comes out one
+            # event short of the 1000 it asked for -- about one job in two hundred. 0.15 clears
+            # the floor by 50 MeV and gives up 5e-6 of the decays, the same order as the loss it
+            # removes, in a region where the decay products are unobservably soft anyway.
+            # Narrowing the channel lists raises the floor (tau nu alone would put it at
+            # 1.88 GeV), so revisit this line together with them.
+            "24:mMin = 0.15",
             "24:onMode = on",
             "25:m0 = 125.0",
             "25:onMode = off",
