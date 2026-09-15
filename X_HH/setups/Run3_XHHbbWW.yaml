@@ -86,6 +86,58 @@ files_per_merge: 50
 # `production_mode: GluGlutoBulkGraviton`
 production_mode: GluGlutoRadion
 
+# What one job of this production asks its batch system for: `max_runtime` in hours, `memory` in
+# MB per job, `n_cpus` in cores. These belong to the production rather than to DSProd -- another
+# model's gridpack takes minutes where this one's takes hours -- so each setup carries its own; a
+# task left out keeps DSProd's default, and the command line (`--RunProd-max-runtime 30h`)
+# overrides whatever is written here.
+resources:
+  # The fused LHEGS->NANO chain, 1000 events. Four cores: the median job of a finished 4800-job
+  # era runs 4.38 h on four against 7.07 h on two, i.e. +24 % core-hours for -38 % wall clock,
+  # with a median CPU efficiency of 85 % of the four. 10 000 MB is CRAB's ceiling at four cores
+  # (max(3000, 2500 x numCores)) and is a kill threshold rather than a reservation, so nothing is
+  # saved by asking for less -- the measured 4-thread peak is 5404 MB, the p99 over 594 jobs 6018
+  # and the worst job ever seen 8811. 16 h is asked for against that 4.38 h median; the absolute
+  # tail is not on record (the measurements keep it only as a ratio -- the slowest 1 % barely move
+  # between two cores and four), so the figure is a judgement, and a run that needs longer raises
+  # it with `--RunProd-max-runtime`. It is a shorter slot than DSProd's 24 h default on purpose:
+  # CRAB tests MaxWallTimeMins against the time a pilot has LEFT, not against its full length, so
+  # a shorter request matches more pilots.
+  RunProd:
+    max_runtime: 16
+    memory: 10000
+    n_cpus: 4
+
+  # MadGraph gridpack generation. These are the numbers gridpacks have actually been generated
+  # under, written down rather than changed: DSProd invokes gridpack_generation.sh without a
+  # `queue` argument, so it takes the `local` branch and configures MadGraph with `set run_mode 2`
+  # and NO `nb_core` -- MadGraph then picks its own worker count, which DSProd neither sets nor
+  # caps (the `set nb_core $NB_CORE` line is in the script's `pdmv` branch, which is never taken).
+  # The only timing on record, ~1.5 h, was observed inside a four-core RunProd slot, so it says
+  # nothing about how long generation takes on the one core requested here; until a one-core
+  # generation is measured, the runtime stays where it is, because a gridpack job killed on
+  # walltime costs far more than a request that is too long.
+  #
+  # No `memory` here: generation has always fitted in what CRAB gives a job that names none --
+  # max(3000, 2500 x numCores), i.e. 3000 MB at one core -- and naming 3000 would be worse than
+  # saying nothing, because CRAB sells memory only in per-core units and an explicit 3000 MB buys
+  # the job a second core it never uses.
+  MakeGridpack:
+    max_runtime: 12
+    n_cpus: 1
+
+  # The merge: 50 per-seed nanos into one file with haddnano.py. The 5000 MB was measured on
+  # exactly this group size -- the merge peaked at 4254 MB and took 5 memory kills (exit 50660) at
+  # the 3000 MB a one-core CRAB job may ask for, so 5000 is the smallest value that covers the
+  # peak. haddnano is single-threaded, hence one core; the two cores CRAB ends up giving it are
+  # bought by the memory request alone, and the second sits idle for the length of a short job.
+  # 3 h is what this production's merges already run under: of the 284 merge jobs of the 2022EE
+  # task none failed on walltime (its three failures carry CMSSW's information-free exit 5).
+  NanoMergeTask:
+    max_runtime: 3
+    memory: 5000
+    n_cpus: 1
+
 # Points are named exactly as the corresponding central datasets on DAS, and so are the two tokens
 # a point sets: `production_mode` (the cards, here the setup-wide default GluGlutoRadion) and
 # `final_state` (the gen fragment that decays the HH pair, models/X_HH/.../fragments/<final_state>.py).

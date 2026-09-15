@@ -29,8 +29,12 @@ Production setups (`*/setups/*.yaml`) carry `events_total` per era, and the exis
 in comments **how those numbers were derived** — a luminosity scaling from the central production,
 then a unification rule across mass points, with the arithmetic written out.
 
-A diff that changes an event count, adds an era, or adds a mass point must keep that derivation
-truthful. Check the arithmetic against the stated rule, and flag a number that no longer follows
+The same holds for a setup's `resources:` block — the runtime, memory and cores its jobs ask for:
+those numbers come from measurements of this production, and the measurement belongs in the comment
+above them.
+
+A diff that changes an event count, a resource request, adds an era, or adds a mass point must keep
+that derivation truthful. Check the arithmetic against the stated rule, and flag a number that no longer follows
 from the comment above it, or a comment left describing the previous numbers. A count changed
 without its justification is the single most expensive kind of error this repository can contain:
 too low and the sample is unusable, too high and the grid time is wasted.
