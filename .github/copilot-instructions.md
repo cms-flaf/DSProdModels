@@ -54,6 +54,10 @@ Points name a production mode and a final state using the **tokens the correspon
 dataset uses on DAS**, and the plugin maps those onto a cards directory and a fragment. A renamed
 token, a new production mode without its `PRODUCTION_MODES` entry, or a final state without a
 matching fragment breaks the mapping — and it breaks it at production time, not at review time.
+Part of this is now mechanical: `X_HH`'s plugin implements the base class's `validate(point)` hook
+to refuse a point whose name disagrees with its own `production_mode`, `final_state` or `mass`, and
+DSProd's `test/test_shipped_setups.py` calls it for every point of every shipped setup. A model
+that does not implement the hook still needs the convention checked by hand.
 
 ### Era coverage must be complete and intentional
 
