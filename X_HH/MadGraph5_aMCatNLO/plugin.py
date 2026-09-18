@@ -94,6 +94,27 @@ class XHH(ProcessCustomization):
             )
         return fs
 
+    def validate(self, point):
+        """Refuse a point whose name disagrees with its own parameters.
+
+        The name is the DAS dataset name and nothing downstream reads it, so a point that carries
+        `mass: 250` under a name ending in `_M-9999` produces a perfectly good sample that no
+        analysis can match to the mass it was generated at. DAS builds the name from exactly the
+        three tokens checked here, which is what makes the check possible at all.
+        """
+        mode = self.production_mode(point)
+        final_state = self.final_state(point)
+        mass = point.params.get("mass")
+        problems = []
+        if not point.name.startswith(mode):
+            problems.append(f"is produced as {mode}, which its name does not start with")
+        if final_state not in point.name:
+            problems.append(f"decays to {final_state}, which its name does not carry")
+        if mass is None or not point.name.endswith(f"_M-{mass}"):
+            problems.append(f"carries mass {mass!r}, so its name should end with `_M-{mass}`")
+        if problems:
+            raise ValueError(f"point {point.name!r} " + "; ".join(problems))
+
     # ---- the ProcessCustomization interface ---------------------------------
     def enumerate_points(self, process_cfg):
         events_per_job = process_cfg.get("events_per_job", 0)

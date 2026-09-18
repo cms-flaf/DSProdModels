@@ -25,7 +25,8 @@ Both are open sets, and neither needs code:
 - **Registered name:** `X_HH` (the `process:` key in a DSProd production setup).
 - **Generator:** `MadGraph5_aMCatNLO` (LO gridpack) + Pythia8 (CP5) hadronization.
 - **Production modes shipped:** `GluGlutoRadion` — gluon fusion, narrow spin-0 radion.
-- **Final states shipped:** `2B2JLNu` — bbWW single lepton; `2B2L2Nu` — bbWW double lepton.
+- **Final states shipped:** `2B2JLNu` — bbWW single lepton; `2B2L2Nu` — bbWW double lepton;
+  `2B2Tau` — bbττ.
 
 ## Layout
 
@@ -38,7 +39,8 @@ MadGraph5_aMCatNLO/
     │   └── GluGlutoRadion/      gg -> X(radion) -> HH  (see its README.md for the recipe)
     └── fragments/               one file per final state; the file name IS `final_state:`
         ├── 2B2JLNu.py           bbWW single lepton
-        └── 2B2L2Nu.py           bbWW double lepton
+        ├── 2B2L2Nu.py           bbWW double lepton
+        └── 2B2Tau.py            bbττ
 ```
 
 Both levels use the **DAS tokens** of the corresponding central samples, so a point's `name`,
@@ -50,9 +52,17 @@ Both levels use the **DAS tokens** of the corresponding central samples, so a po
   production_mode            final_state
 ```
 
-## Production setup
+## Production setups
 
-`setups/Run3_XHHbbWW.yaml` — **160 samples**: the full 40-mass central grid × 2 spin hypotheses
+Two, one per signal: `setups/Run3_XHHbbWW.yaml` (bbWW, 160 samples) and
+`setups/Run3_XHHbbtautau.yaml` (bbττ, 80 samples). They share everything upstream of the decay —
+the same cards, the same gridpacks, the same conditions, the same job sizes — and differ in the gen
+fragment their points name, in the product directory they write to (`output:`), and in how much of
+the grid central production already covers, which is what the per-era commands below restrict.
+
+### `Run3_XHHbbWW.yaml` — bbWW
+
+**160 samples**: the full 40-mass central grid × 2 spin hypotheses
 (narrow radion, spin 0; bulk graviton, spin 2) × 2 final states. **One file for all of them**:
 `events_total` is given per era, so there is no per-era copy to keep in sync, and **every point
 lists every era** — what a given run produces is chosen on the command line.
@@ -76,6 +86,32 @@ lists every era** — what a given run produces is chosen on the command line.
 | Run3_2023BPix | 2023BPix | v12 | 16.00 M | 85 GB |
 | Run3_2024 | 2024 + 2025 + 2026 | v15 | 288.00 M | 1942 GB |
 | | | | **351.20 M** | **2.28 TB** |
+
+### `Run3_XHHbbtautau.yaml` — bbττ
+
+**80 samples**: the same 40-mass grid × 2 spin hypotheses, one final state (`2B2Tau`). Same
+structure, same per-era event targets, same file granularity — but a different part of the grid is
+missing, because central production treated this signal differently:
+
+| Era | Central masses | Produced here | Events as submitted | Storage |
+|---|---|---|---|---|
+| Run3_2022 | 33 of 40 | 7 | 1.40 M | 7 GB |
+| Run3_2022EE | 33 of 40 | 7 | 4.90 M | 26 GB |
+| Run3_2023 | 11 of 40 | 29 | 11.80 M | 62 GB |
+| Run3_2023BPix | 11 of 40 | 29 | 6.90 M | 37 GB |
+| Run3_2024 | 0 of 40 | 40 | 144.00 M | 971 GB |
+| | | | **169.00 M** | **1.10 TB** |
+
+plus **2.3 GB of gridpacks**. That is not a duplicate by accident: `ImportGridpack` writes
+`<output>/gridpacks/<name>/gridpack.tar.xz`, and `output:` is what differs between the two setups,
+so this production stages its own copy of all 80 even though the bbWW production already holds the
+same files. The content is shared, the copy is not.
+
+Verified on DAS, identical for both spins: the 2022 eras hold 33 masses, 2023 and 2023BPix hold
+**only** the eleven high masses 1100 – 4500 GeV of a later gap-filling campaign, and Run3Summer24
+has no bbττ sample at all. The event targets are the table below unchanged — central's own bbττ
+statistics agree with it, including exactly 100 000 (2023) and 50 000 (2023BPix) events per point
+for the eleven masses it did produce there.
 
 Storage is at the **measured** NanoAOD size — 5.29 kB/event in v12 and 6.74 in v15, taken from 50
 staged nanos merged into one delivered 50 000-event file. (Central NanoAOD on DAS shows
@@ -119,11 +155,13 @@ events overall.
 Run the **final** task and LAW schedules everything upstream (`InstallCMSSW` → `ImportGridpack` →
 `RunProd` → `NanoMergeTask`). One command per era, from the DSProd checkout after `source env.sh`:
 
+### bbWW — `Run3_XHHbbWW.yaml`
+
 ```bash
 SETUP=models/X_HH/setups/Run3_XHHbbWW.yaml
 ```
 
-### Run3_2023, Run3_2023BPix, Run3_2024 — the whole grid
+#### Run3_2023, Run3_2023BPix, Run3_2024 — the whole grid
 
 Central production has **nothing** for these eras (verified on DAS: zero `Run3Summer23*`,
 `Run3Summer23BPix*` and — for this signal — no 2024 X→HH samples), so all 160 points are produced.
@@ -134,7 +172,7 @@ law run NanoMergeTask --setup $SETUP --eras Run3_2023BPix  --workflow crab
 law run NanoMergeTask --setup $SETUP --eras Run3_2024      --workflow crab
 ```
 
-### Run3_2022 and Run3_2022EE — only the masses central lacks
+#### Run3_2022 and Run3_2022EE — only the masses central lacks
 
 Central already delivers 22 of the 40 masses in both 2022 eras — verified on DAS
 (`Run3Summer22*NanoAODv12`, 176 datasets: the same 22 masses for **both** spins and **both** final
@@ -151,6 +189,48 @@ law run NanoMergeTask --setup $SETUP --eras Run3_2022EE --points "$GAP" --workfl
 
 That selects **72 of the 160 points** (18 masses × 2 spins × 2 final states). The globs are
 anchored on the mass at the end of the name, so `*_M-500` does not also match `M-5000`.
+
+### bbττ — `Run3_XHHbbtautau.yaml`
+
+```bash
+SETUP=models/X_HH/setups/Run3_XHHbbtautau.yaml
+```
+
+Central covers a different part of this grid in every era, so all three commands differ from the
+bbWW ones above.
+
+#### Run3_2024 — the whole grid
+
+Run3Summer24 has no X→HH→bbττ sample at all (verified on DAS), so all 80 points are produced.
+
+```bash
+law run NanoMergeTask --setup $SETUP --eras Run3_2024 --workflow crab
+```
+
+#### Run3_2023 and Run3_2023BPix — the 29 masses central skipped
+
+These eras hold **only** the eleven high masses of a later gap-filling campaign — 1100, 1300, 1500,
+1700, 1900, 2200, 2400, 2600, 2800, 3500 and 4500 GeV — so the other 29 are produced, at both
+spins (58 of the 80 points):
+
+```bash
+GAP23='*_M-250,*_M-260,*_M-270,*_M-280,*_M-300,*_M-320,*_M-350,*_M-360,*_M-400,*_M-450,*_M-500,*_M-550,*_M-600,*_M-650,*_M-700,*_M-750,*_M-800,*_M-850,*_M-900,*_M-1000,*_M-1200,*_M-1400,*_M-1600,*_M-1800,*_M-2000,*_M-2500,*_M-3000,*_M-4000,*_M-5000'
+
+law run NanoMergeTask --setup $SETUP --eras Run3_2023     --points "$GAP23" --workflow crab
+law run NanoMergeTask --setup $SETUP --eras Run3_2023BPix --points "$GAP23" --workflow crab
+```
+
+#### Run3_2022 and Run3_2022EE — the seven masses central lacks
+
+Central delivers 33 of the 40 masses in both 2022 eras, so only 320, 360, 400, 500, 750, 850 and
+900 GeV are missing — 14 of the 80 points:
+
+```bash
+GAP22='*_M-320,*_M-360,*_M-400,*_M-500,*_M-750,*_M-850,*_M-900'
+
+law run NanoMergeTask --setup $SETUP --eras Run3_2022   --points "$GAP22" --workflow crab
+law run NanoMergeTask --setup $SETUP --eras Run3_2022EE --points "$GAP22" --workflow crab
+```
 
 !!! tip "Check before submitting"
     `--print-status -1` on any of these shows what LAW considers done versus pending without
@@ -173,9 +253,14 @@ setup's per-era list and never widens it.
 - **Gen fragments** — named after their DAS final-state token and taken verbatim from the McM
   requests of the corresponding central samples:
   [`B2G-Run3Summer22EEwmLHEGS-00612`](https://cms-pdmv.cern.ch/mcm/requests?prepid=B2G-Run3Summer22EEwmLHEGS-00612)
-  (`2B2JLNu`) and
+  (`2B2JLNu`),
   [`B2G-Run3Summer22EEwmLHEGS-00656`](https://cms-pdmv.cern.ch/mcm/requests?prepid=B2G-Run3Summer22EEwmLHEGS-00656)
-  (`2B2L2Nu`).
+  (`2B2L2Nu`) and
+  [`B2G-Run3Summer22EEwmLHEGS-00069`](https://cms-pdmv.cern.ch/mcm/requests?prepid=B2G-Run3Summer22EEwmLHEGS-00069)
+  (`2B2Tau`). Each was checked against the request of another mass in the same campaign, which
+  carries byte-identical `processParameters` — and, for `2B2Tau`, against the spin-2 request
+  (`-00091`, bulk graviton M-1000) as well. That is what makes one fragment per final state
+  legitimate across the whole grid, both spins included.
 - **Central gridpacks** — the standard mass points exist on cvmfs under
   `/cvmfs/cms.cern.ch/phys_generator/gridpacks/RunIII/13p6TeV/.../GF_HH_Spin0/Radion_hh_narrow_M<mass>_*`
   and are mirrored into [DSProdGridpacks](https://github.com/cms-flaf/DSProdGridpacks) under
@@ -190,12 +275,19 @@ setup's per-era list and never widens it.
 - **Mass scan:** only the resonance mass changes between points (`__MASS__` → `mass 35` in
   `customizecards.dat`); the width is fixed narrow. The plugin substitutes `__NAME__`/`__MASS__`
   when rendering the cards.
-- **Final states share a gridpack:** the Higgses leave MadGraph undecayed, so `2B2JLNu` and
-  `2B2L2Nu` of the same mass use one gridpack — the gridpack tasks branch over distinct gridpacks,
-  not points, and it is imported (or produced) once. The gridpack **name** comes from the
-  production mode (`PRODUCTION_MODES[...]["gridpack"]` → `GluGlutoRadiontoHH_M-800`), so gluon
+- **Final states share a gridpack:** the Higgses leave MadGraph undecayed, so `2B2JLNu`,
+  `2B2L2Nu` and `2B2Tau` of the same mass and spin use one gridpack — the gridpack tasks branch
+  over distinct gridpacks, not points, and it is imported (or produced) once **per setup**: the
+  product path starts at `output:`, so the bbWW and bbττ productions each stage their own copy of
+  the same file. The gridpack **name** comes from the production mode (`PRODUCTION_MODES[...]["gridpack"]` →
+  `GluGlutoRadiontoHH_M-800`), so gluon
   fusion and VBF gridpacks stay distinct even where they are stored flat, as they are under a
   production's `<output>/gridpacks/`.
+- **`2B2Tau` is the simplest of the three fragments:** two channels open on the Higgs
+  (`5 -5` and `15 -15`), one filter, and no `W`/`Z` settings at all — the taus decay inclusively.
+  It therefore carries none of the `mMin` correction the two bbWW fragments needed: nothing in it
+  restricts a `W` or `Z` channel, so nothing can sample a resonance Pythia is unable to decay
+  (see the comment in `2B2L2Nu.py`).
 - **`2B2L2Nu` is not just a filter tweak of `2B2JLNu`:** it additionally enables leptonic `Z` decays
   and `H→ZZ` (`25:onIfMatch = 23 23`), restricts `W`/`Z` to leptonic modes and sets
   `eMuAsEquivalent = off`. Each final state therefore keeps its own McM-sourced fragment rather

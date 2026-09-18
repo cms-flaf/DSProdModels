@@ -1,0 +1,969 @@
+# X->HH->bbtautau resonant signal: both spin hypotheses (narrow radion, spin 0, and bulk graviton,
+# spin 2), the full 40-mass central grid each -- 80 points.
+#
+# The bbWW twin of this file is Run3_XHHbbWW.yaml. Everything upstream of the decay is shared with
+# it -- the same cards, the same gridpacks, the same conditions -- and only the gen fragment
+# differs (`final_state: 2B2Tau`), because the Higgs bosons leave MadGraph undecayed. It is a
+# separate setup rather than more points in that file for two reasons: the products are a separate
+# tree (`output:` below), and, unlike bbWW, central production covers a DIFFERENT part of this grid
+# in every era, so the two productions are restricted differently on the command line.
+#
+# WHAT CENTRAL ALREADY DELIVERS (verified on DAS with
+# `dasgoclient -query "dataset=/GluGluto{Radion,BulkGraviton}toHHto2B2Tau_M-*/<campaign>-*/NANOAODSIM"`,
+# identical for both spins):
+#
+#     era             central masses   this setup produces
+#     Run3_2022            33                 7
+#     Run3_2022EE          33                 7
+#     Run3_2023            11                29
+#     Run3_2023BPix        11                29
+#     Run3_2024             0                40
+#
+# The 2022 eras hold 33 of the 40 masses, so only 320, 360, 400, 500, 750, 850 and 900 GeV are
+# missing there. 2023 and 2023BPix hold ONLY the eleven high masses 1100, 1300, 1500, 1700, 1900,
+# 2200, 2400, 2600, 2800, 3500 and 4500 GeV -- a later gap-filling campaign that never came back
+# for the rest -- so 29 masses are missing. Run3Summer24 has no X->HH->bbtautau sample at all.
+# None of this matches the bbWW coverage (22 masses in the 2022 eras, nothing afterwards), which is
+# why the per-era `--points` restrictions in the model README differ between the two setups.
+#
+# EVERY POINT LISTS EVERY ERA -- the setup describes the full grid, and what a given run actually
+# produces is chosen on the command line. Producing a mass central already has would duplicate a
+# central sample, so each era is restricted to its own gap; the ready-made commands are in the
+# model README.
+#
+# EVENT TARGETS are the same per-era, per-group numbers as the bbWW setup, derived there from the
+# central per-mass statistics scaled by integrated luminosity and unified over each mass group:
+#
+#              era            M <= 1000 GeV   M > 1000 GeV
+#              Run3_2022           100 000         50 000
+#              Run3_2022EE         350 000        100 000
+#              Run3_2023           250 000        100 000
+#              Run3_2023BPix       150 000         50 000
+#              Run3_2024         2 850 000        750 000
+#
+# They transfer to this final state because the statistics follow from the mass and the era rather
+# than from the decay, and central's own bbtautau numbers say the same: 88 000 (2022, for most
+# masses; M-250 is 85 196) + ~310 k (2022EE) at M <= 1000 GeV, i.e. the 400 k the bbWW table starts
+# from, and -- the sharper check --
+# exactly 100 000 events per 2023 point and 50 000 per 2023BPix point for the eleven masses central
+# did produce there, which is what the table above gives for M > 1000 GeV. (The eleven masses of
+# that later campaign got ~200 k rather than 100 k in the 2022 eras; they are not produced here, so
+# it does not enter.)
+#
+# Totals as submitted with the documented per-era commands:
+# 1.40 M (2022) + 4.90 M (2022EE) + 11.80 M (2023) + 6.90 M (2023BPix) + 144.00 M (2024)
+# = 169.00 M events, i.e. 7 + 26 + 62 + 37 GB for the 2022/2023 eras and 971 GB for 2024,
+# 1.10 TB in total.
+#
+# Plus 2.3 GB of gridpacks, which is NOT a duplicate of the bbWW production's copy even though the
+# content is identical: the import product is `<output>/gridpacks/<name>/gridpack.tar.xz`, and
+# `output:` differs, so this production stages its own copy of all 80 (measured from the store's
+# LFS pointers: 80 tracked, mean 29 MB). Nothing needs MakeGridpack -- every one of them is in
+# DSProdGridpacks already.
+#
+# Backend-agnostic: run with --workflow local|htcondor|crab. Produce a subset with
+# `--points '<glob>'` and a short check with `--test <n-events>`; neither needs another setup.
+process: X_HH
+conditions: config/conditions_Run3.yaml
+
+# product directory under fs_default; FLAF consumes
+# <fs_default>/<output>/nanoAOD_<version>/<era>/<point>/nano_<version>_<n>.root
+output: XHHbbtautau
+
+eras: [ Run3_2022, Run3_2022EE, Run3_2023, Run3_2023BPix, Run3_2024 ]
+
+# NanoAOD versions per era, as in the bbWW setup: the version central production delivers for that
+# era, and one version only -- each is a full second copy of the era's events.
+nano_versions:
+  Run3_2022: [ v12 ]
+  Run3_2022EE: [ v12 ]
+  Run3_2023: [ v12 ]
+  Run3_2023BPix: [ v12 ]
+  Run3_2024: [ v15 ]
+
+first_step: LHEGS
+last_step: NANO
+
+# One production job makes `events_per_job` events; `files_per_merge` of those are merged into one
+# FLAF-facing file of 50 000 events. Kept identical to the bbWW setup so both final states deliver
+# the same file granularity, and so every `events_total` above is an exact number of files.
+events_per_job: 1000
+files_per_merge: 50
+
+# default production mode for every point below; the spin-2 points override it with
+# `production_mode: GluGlutoBulkGraviton`
+production_mode: GluGlutoRadion
+
+# What one job of this production asks its batch system for. These are the bbWW production's
+# measured numbers, carried over unchanged: the two productions run the same fused LHEGS->NANO
+# chain from the same gridpacks, and the only difference is which decay Pythia is asked for. No
+# bbtautau job has been measured yet, so they are a starting point rather than a measurement of
+# this production -- revise them here once a full era has run, and override a single run with
+# `--RunProd-max-runtime`/`--RunProd-memory`/`--RunProd-n-cpus`.
+resources:
+  RunProd:
+    max_runtime: 16
+    memory: 10000
+    n_cpus: 4
+
+  # MadGraph gridpack generation. Nothing in this setup needs it -- every mass of both spins is
+  # already mirrored in DSProdGridpacks -- but a setup that can reach MakeGridpack should say what
+  # the task asks for, and these are the numbers the bbWW gridpacks were generated under.
+  MakeGridpack:
+    max_runtime: 12
+    n_cpus: 1
+
+  # The merge: 50 per-seed nanos into one file with haddnano.py. Same group size as bbWW, so the
+  # same 5000 MB (measured peak 4254 MB, memory kills at 3000) and the same 3 h.
+  NanoMergeTask:
+    max_runtime: 3
+    memory: 5000
+    n_cpus: 1
+
+# Points are named exactly as the corresponding central datasets on DAS, and so are the two tokens
+# a point sets: `production_mode` (the cards, here the setup-wide default GluGlutoRadion) and
+# `final_state` (the gen fragment that decays the HH pair, models/X_HH/.../fragments/2B2Tau.py).
+# The gridpack is shared with the bbWW final states of the same mass and spin.
+points:
+  # ---- radion (spin 0), bbtautau ----
+  - name: GluGlutoRadiontoHHto2B2Tau_M-250
+    mass: 250
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-260
+    mass: 260
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-270
+    mass: 270
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-280
+    mass: 280
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-300
+    mass: 300
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-320
+    mass: 320
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-350
+    mass: 350
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-360
+    mass: 360
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-400
+    mass: 400
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-450
+    mass: 450
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-500
+    mass: 500
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-550
+    mass: 550
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-600
+    mass: 600
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-650
+    mass: 650
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-700
+    mass: 700
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-750
+    mass: 750
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-800
+    mass: 800
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-850
+    mass: 850
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-900
+    mass: 900
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1000
+    mass: 1000
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1100
+    mass: 1100
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1200
+    mass: 1200
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1300
+    mass: 1300
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1400
+    mass: 1400
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1500
+    mass: 1500
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1600
+    mass: 1600
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1700
+    mass: 1700
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1800
+    mass: 1800
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-1900
+    mass: 1900
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2000
+    mass: 2000
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2200
+    mass: 2200
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2400
+    mass: 2400
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2500
+    mass: 2500
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2600
+    mass: 2600
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-2800
+    mass: 2800
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-3000
+    mass: 3000
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-3500
+    mass: 3500
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-4000
+    mass: 4000
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-4500
+    mass: 4500
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoRadiontoHHto2B2Tau_M-5000
+    mass: 5000
+    spin: 0
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  # ---- bulk graviton (spin 2), bbtautau ----
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-250
+    mass: 250
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-260
+    mass: 260
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-270
+    mass: 270
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-280
+    mass: 280
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-300
+    mass: 300
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-320
+    mass: 320
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-350
+    mass: 350
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-360
+    mass: 360
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-400
+    mass: 400
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-450
+    mass: 450
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-500
+    mass: 500
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-550
+    mass: 550
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-600
+    mass: 600
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-650
+    mass: 650
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-700
+    mass: 700
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-750
+    mass: 750
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-800
+    mass: 800
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-850
+    mass: 850
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-900
+    mass: 900
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1000
+    mass: 1000
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 100000
+      Run3_2022EE: 350000
+      Run3_2023: 250000
+      Run3_2023BPix: 150000
+      Run3_2024: 2850000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1100
+    mass: 1100
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1200
+    mass: 1200
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1300
+    mass: 1300
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1400
+    mass: 1400
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1500
+    mass: 1500
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1600
+    mass: 1600
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1700
+    mass: 1700
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1800
+    mass: 1800
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-1900
+    mass: 1900
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2000
+    mass: 2000
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2200
+    mass: 2200
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2400
+    mass: 2400
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2500
+    mass: 2500
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2600
+    mass: 2600
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-2800
+    mass: 2800
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-3000
+    mass: 3000
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-3500
+    mass: 3500
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-4000
+    mass: 4000
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-4500
+    mass: 4500
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
+  - name: GluGlutoBulkGravitontoHHto2B2Tau_M-5000
+    mass: 5000
+    spin: 2
+    production_mode: GluGlutoBulkGraviton
+    final_state: 2B2Tau
+    events_total:
+      Run3_2022: 50000
+      Run3_2022EE: 100000
+      Run3_2023: 100000
+      Run3_2023BPix: 50000
+      Run3_2024: 750000
